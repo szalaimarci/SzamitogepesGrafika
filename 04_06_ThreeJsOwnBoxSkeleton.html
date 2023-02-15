@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Three.js Box app</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+
+<body>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import { TrackballControls } from './js-r132/examples/jsm/controls/TrackballControls.js';
+    import { VertexNormalsHelper } from './js-r132/examples/jsm/helpers/VertexNormalsHelper.js';
+
+    // Globális változók
+    var WIDTH, HEIGHT, aspectRatio;
+    var scene, camera;
+    var geometry, material;
+    var renderer;
+    var controls;
+
+    init();
+    animate();
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        // Renderer létrehozása és DOM-hoz adása
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( WIDTH, HEIGHT );
+        //renderer.setClearColor( 0xffffff, 1 );
+        document.body.appendChild( renderer.domElement );
+
+        // Színtér létrehozása
+        scene = new THREE.Scene();
+
+        // Kamera létrehozása és vetítési paramétereinek beállítása
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+        camera.position.z = 15;
+        // Kamera a színtér origója felé néz
+        camera.lookAt( scene.position );
+
+        // Csúcspontok tömbje
+		// Egészítsük ki a hiányzó koordinátákkal!
+        // Minden lap irányhoz újra fel kell venni ugyanazt a térbeli koordinátát!
+        const vertices = [];
+        const indices = [];
+        const normals = [];
+        geometry = new THREE.BufferGeometry();
+        vertices.push(
+                -1, -1,  1,
+                 1, -1,  1,
+                 1,  1,  1,
+                -1,  1,  1,
+                -1, -1, -1
+        );
+
+        // Minden vertexhez pontosan 1 normálvektor tartozik!
+        normals.push(
+             0.0, 0.0, 1.0,
+             0.0, 0.0, 1.0,
+             0.0, 0.0, 1.0,
+             0.0, 0.0, 1.0,
+            -1.0, 0.0, 0.0
+        );
+
+        // Lapok tömbje
+		// Adjuk hozzá a hiányzó lapkat!
+		// Ne felejtsük, hogy a legfelső lapot nem kell modellezni!
+        indices.push( 0, 1, 3 );
+        indices.push( 1, 2, 3 );
+        // Ez nem lesz jó így, de nézzük meg, mi a hatása:
+        indices.push( 0, 3, 4 );
+        // Nézzük meg azt is, hogy mit csinál ekkor a computeVertexNormals() hívás.
+
+        // Attribútumok beállítása
+        geometry.setIndex( indices );
+        geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+        geometry.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+
+        // Csak akkor kell, ha nem adjuk meg a normals[]-t.
+        // geometry.computeVertexNormals();
+
+        // Anyag
+        material = new THREE.MeshPhongMaterial( { color: 0xffff00, wireframe: false } );
+        material.side = THREE.DoubleSide;
+
+        // Háromszögháló
+        var poly = new THREE.Mesh( geometry, material );
+        scene.add( poly );
+
+        // Tengelyek megjelenítése
+        var axesHelper = new THREE.AxesHelper( 10 );
+        scene.add( axesHelper );
+
+        var vNH = new VertexNormalsHelper( poly );
+        scene.add( vNH );
+
+        var aLight = new THREE.AmbientLight( 0x202020, 1 );
+        scene.add( aLight );
+
+        var pLight = new THREE.PointLight( 0xffffff, 1 );
+        pLight.position.set( 4, 5, 3 );
+        scene.add( pLight );
+		
+		var pLH = new THREE.PointLightHelper( pLight, 0.2 );
+		scene.add( pLH );
+
+        // Interaktív kameramozgatás
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+
+        // Az ablak átméretezése esetén visszahívható függvény megadása
+        window.addEventListener( 'resize', handleWindowResize, false );
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        renderer.setSize( WIDTH, HEIGHT );
+        camera.aspect = WIDTH / HEIGHT;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        // Újabb képkocka rajzolásának kérése.
+        // Maximálisan 60 FPS-t biztosít a rendszer.
+        requestAnimationFrame( animate );
+
+        // Interaktív kameramozgatás kezelése
+        controls.update();
+
+        render();
+    }
+
+    function render() {
+        // 3D -> 2D vetített kép kiszámítása.
+        // scene 3D színtér képe a camera kamera szemszögéből.
+        renderer.render(scene, camera);
+    }
+
+</script>
+</body>
+</html>

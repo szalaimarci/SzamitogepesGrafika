@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Three.js Tank Example 2</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+<body>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import { TrackballControls } from './js-r132/examples/jsm/controls/TrackballControls.js';
+    import { GUI } from './js-r132/examples/jsm/libs/dat.gui.module.js';
+    import Stats from './js-r132/examples/jsm/libs/stats.module.js';
+
+    var WIDTH, HEIGHT, aspectRatio;
+    var scene, camera, renderer;
+    var ctrl, stats, controls;
+    var material;
+    var groupTank;
+    var mesh2, holder3;
+
+    var meshController = function () {
+        this.rotationBarrel = 0.0;
+        this.rotationUpper = 0.0;
+        this.positionTank = 0.0;
+    };
+
+    init();
+    animate();
+
+    function addStatsObject() {
+        stats = new Stats();
+        stats.setMode(0);
+
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        document.body.appendChild( stats.domElement );
+    }
+
+    function addControlGui( controlObject ) {
+        var gui = new GUI( { autoPlace: false } );
+        gui.add( controlObject, 'rotationBarrel', -60, 15 ).name( 'Ágyúcső szöge' );
+        gui.add( controlObject, 'rotationUpper', -180.0, 180.0 ).name( 'Forgás szöge' );
+        gui.add( controlObject, 'positionTank', -400.0, 400.0).name( 'Tank pozíció' );
+
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '0px';
+        gui.domElement.style.right = '0px';
+        document.body.appendChild( gui.domElement );
+    }
+
+    function init() {
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        //container = document.getElementById( 'myCanvas' );
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x808080 );
+        document.body.appendChild( renderer.domElement );
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 3000 );
+        //camera.position.z = 200;
+        //camera = new THREE.OrthographicCamera( WIDTH / - 2, WIDTH / 2, HEIGHT / 2, HEIGHT / - 2, - 500, 1000 );
+        camera.position.set( -600, 600, 800);
+        camera.lookAt( scene.position );
+
+        var aLight = new THREE.AmbientLight( 0x808080 );
+        var pLight1 = new THREE.PointLight( 0xffffff );
+        pLight1.position.set( 200.0, 300.0, 100.0 );
+        var pLight2 = new THREE.PointLight( 0xffffff );
+        pLight2.position.set( -200.0, 300.0, 100.0 );
+        scene.add( aLight );
+        scene.add( pLight1 );
+        scene.add( pLight2 );
+
+        var plane1 = new THREE.PlaneGeometry( 800, 1200 );
+        var materialGr = new THREE.MeshPhongMaterial( { color: 0x003300, side: THREE.DoubleSide, wireframe: false } );
+        var planeMesh = new THREE.Mesh( plane1, materialGr );
+        planeMesh.rotation.x = THREE.Math.degToRad( -90 );
+        scene.add( planeMesh );
+
+        groupTank = new THREE.Group();
+        material = new THREE.MeshPhongMaterial( { color: 0x333388, wireframe: false } );
+
+        var box1 = new THREE.BoxGeometry( 72, 42, 120 );
+        var mesh1 = new THREE.Mesh( box1, material );
+        groupTank.add( mesh1 );
+
+        var box2 = new THREE.BoxGeometry( 40, 28, 68 );
+        mesh2 = new THREE.Mesh( box2, material );
+        mesh2.position.y = 35.0;
+        groupTank.add( mesh2 );
+        //mesh1.add( mesh2 );
+
+        holder3 = new THREE.Object3D();
+        var box3 = new THREE.BoxGeometry( 10.0, 10.0, 80.0 );
+        var mesh3 = new THREE.Mesh( box3, material );
+        mesh3.position.z = 40.0;
+        holder3.position.set( 0.0, 3.0, 34.0 );
+        holder3.add( mesh3 );
+        mesh2.add( holder3 );
+
+        groupTank.scale.set( 2.0, 2.0, 2.0 );
+        groupTank.position.y = 42.0;
+        scene.add( groupTank );
+
+        ctrl = new meshController();
+        addControlGui( ctrl );
+        addStatsObject();
+
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+
+        window.addEventListener( 'resize', handleWindowResize, false );
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        console.log( 'WIDTH=' + WIDTH + '; HEIGHT=' + HEIGHT );
+        renderer.setSize( WIDTH, HEIGHT );
+        aspectRatio = WIDTH / HEIGHT;
+        camera.aspect = aspectRatio;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function handleWindowResizeOrtho() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        renderer.setSize( WIDTH, HEIGHT );
+
+        camera.left = WIDTH / -2;
+        camera.right = WIDTH / 2;
+        camera.top = HEIGHT / 2;
+        camera.bottom = HEIGHT / -2;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+
+        groupTank.position.z = ctrl.positionTank;
+        mesh2.rotation.y = ctrl.rotationUpper * Math.PI / 180.0;
+        holder3.rotation.x = ctrl.rotationBarrel * Math.PI / 180.0;
+
+        controls.update();
+        stats.update();
+
+        render();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+    }
+
+</script>
+</body>
+</html>

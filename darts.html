@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Darts</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+
+<body>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import { TrackballControls } from './js-r132/examples/jsm/controls/TrackballControls.js';
+
+    // Globális változók
+    var WIDTH, HEIGHT, aspectRatio;
+    var scene, camera;
+    var geometry, material;
+    var renderer;
+    var controls;
+    var cubeMesh;
+    var mainHolder;
+    var dartsGroup;
+    var mesh;
+
+    init();
+    animate();
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        // Renderer létrehozása és DOM-hoz adása
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( WIDTH, HEIGHT );
+        //renderer.setClearColor( 0xffffff, 1 );
+        document.body.appendChild( renderer.domElement );
+
+        // Színtér létrehozása
+        scene = new THREE.Scene();
+
+        // Kamera létrehozása és vetítési paramétereinek beállítása
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+        camera.position.x = -30;
+        camera.position.z = 2;
+        camera.position.y = 10;
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+        var pl1 = new THREE.PointLight(0xffffff, 0.3);
+        pl1.position.z = 15;
+        scene.add(pl1);
+
+        var textureLoader = new THREE.TextureLoader();
+        var texture = textureLoader.load( 'assets/texture/tc-earth_daymap.jpg' );
+
+        var tablaGeo = new THREE.CylinderGeometry(9, 9, 1, 30);
+        var tablaMat = new THREE.MeshPhongMaterial();
+        tablaMat.map = texture;
+        mesh = new THREE.Mesh( tablaGeo, tablaMat );
+        mesh.rotation.x = Math.PI / 2;
+        mesh.position.y = 5.2;
+        mesh.position.z = 25;
+        scene.add(mesh);
+
+        var tablaGeo2 = new THREE.CylinderGeometry(0.9, 0.9, 1, 30);
+        var tablaMat2 = new THREE.MeshPhongMaterial({color: 0xff0000, wireframe: false});
+        var tabla2 = new THREE.Mesh(tablaGeo2, tablaMat2);
+        tabla2.rotation.x = Math.PI / 2;
+        tabla2.position.y = 5.2;
+        tabla2.position.z = 24.7;
+        scene.add(tabla2);
+
+
+        dartsGroup = new THREE.Group();
+        var hegyGeo = new THREE.ConeGeometry(0.3, 1.5);
+        var hegyMat = new THREE.MeshPhongMaterial({color: 0xaaaaaa, wireframe: false});
+        var hegy = new THREE.Mesh(hegyGeo, hegyMat);
+        hegy.rotation.x = Math.PI / 2;
+        hegy.position.y = 0.3;
+        hegy.position.z = 0.75;
+
+        var testGeo = new THREE.CylinderGeometry(0.3, 0.3, 6);
+        var testMat = new THREE.MeshPhongMaterial({color: 0xaaaaaa, wireframe: false});
+        var test = new THREE.Mesh(testGeo, testMat);
+        test.rotation.x = Math.PI / 2;
+        test.position.y = 0.3;
+        test.position.z = -3;
+
+        var tollGeo = new THREE.BoxGeometry(1.5, 1, 0.1);
+        var tollMat = new THREE.MeshPhongMaterial({color: 0xff0000, wireframe: false});
+        var toll = new THREE.Mesh(tollGeo, tollMat);
+        toll.rotation.x = Math.PI / 2;
+        toll.position.y = 0.3;
+        toll.position.z = -5.5;
+
+        var tollGeo2 = new THREE.BoxGeometry(1.5, 1, 0.1);
+        var tollMat2 = new THREE.MeshPhongMaterial({color: 0xff0000, wireframe: false});
+        var toll2 = new THREE.Mesh(tollGeo2, tollMat2);
+        toll2.rotation.x = Math.PI / 2;
+        toll2.rotation.y = Math.PI / 2;
+        toll2.position.y = 0.3;
+        toll2.position.z = -5.5;
+
+
+        dartsGroup.add(hegy);
+        dartsGroup.add(test);
+        dartsGroup.add(toll);
+        dartsGroup.add(toll2);
+        dartsGroup.add(new THREE.AxisHelper(2));
+        dartsGroup.position.y = 5;
+        dartsGroup.position.z = -0.8;
+
+
+        mainHolder = new THREE.Object3D();
+        mainHolder.add(dartsGroup);
+        //mainHolder.add(new THREE.AxisHelper(3));
+        scene.add(mainHolder);
+
+        // Tengelyek megjelenítése
+        var axesHelper = new THREE.AxesHelper( 10 );
+        scene.add( axesHelper );
+
+        // Interaktív kameramozgatás
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+
+        // Az ablak átméretezése esetén visszahívható függvény megadása
+        window.addEventListener( 'resize', handleWindowResize, false );
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        renderer.setSize( WIDTH, HEIGHT );
+        camera.aspect = WIDTH / HEIGHT;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        // Újabb képkocka rajzolásának kérése.
+        // Maximálisan 60 FPS-t biztosít a rendszer.
+        requestAnimationFrame( animate );
+        // Interaktív kameramozgatás kezelése
+        controls.update();
+
+        dartsGroup.rotation.z += 0.1;
+        mainHolder.position.z += 0.2;
+        if (mainHolder.position.z >= 24) {
+            mainHolder.position.z = 0;
+        }
+
+
+
+        // Új képkocka rajzolása
+        render();
+    }
+
+    function render() {
+        // 3D -> 2D vetített kép kiszámítása.
+        // scene 3D színtér képe a camera kamera szemszögéből.
+        renderer.render(scene, camera);
+    }
+
+</script>
+</body>
+</html>

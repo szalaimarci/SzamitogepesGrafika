@@ -1,0 +1,34 @@
+1.alakzat:
+-Henger hozzáadása
+-90 fokban forgatása
+-szerkesztő mód
+-hátsó lap kijelölése
+-extrude X irányban
+-első lap kijelölése, bevel
+
+2. alakzat:
+-1.alakzat végére a cursort, kocka hozzáadása
+-kocka helyre mozgatása
+-szerkesztő mód
+-hátsó lap kijölése, extrude X irányban
+-felső lap kijelölése, extrude z irányban
+-felső lap kijelölése, bevel
+
+3,4,5.alakzat:
+-2.alakzat oldalára a cursort
+-3.alakzat:henger hozzáadása, slálázása, helyre forgatása/igazítása
+-4.alakzat:a nagy henger másolása, beillesztése, kicsinyítése, helyre igazítása
+-5.alakzat:a kis henger másolása és helyre igazítása
+
+6,7,8.alakzat:
+-Az előző 3 henger másolása és helyre tolása
+
+9.alakzat:
+-1.alakzat tetejére a cursort
+-henger hozzáadása
+-szerkesztő mód
+-alsó lap kijelölése
+-extrude
+-felső lap kijelölése
+-bevel
+ 

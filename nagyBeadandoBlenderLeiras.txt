@@ -1,0 +1,31 @@
+1.alakzat:
+-Henger hozzáadása
+-szerkesztő mód
+-felső lap kijelölése
+-inset faces, thickness
+-extrude Z irányban
+-henger oldalának döntése kifele: csúcspontok kijelölése, (G, Z)
+
+2. alakzat:
+-1.alakzat tetejére a cursort, henger hozzáadása
+
+3.alakzat:
+-3.alakzat közepére a cursort
+-háromszög hozzáadása: henger(verticles 3), helyre igazítása
+
+4,5,6.alakzat:
+ a 3 db lámpa ráhelyezése
+-3.alakzatra cursort
+-hengerek hozzáadása, helyre igazítása
+
+7-8.alakzat:
+ jelzőtábla hozzáadása
+-cursort a 2.alakzatra
+-plane mesh hozzáadása
+-helyreigaítás
+-elülső lap kijelölése
+-inset faces
+-extrude
+-oldalak kifele döntése: csúcspontok kijelölése (G, X)
+-alakzat másolása és helyre igazítása
+ 

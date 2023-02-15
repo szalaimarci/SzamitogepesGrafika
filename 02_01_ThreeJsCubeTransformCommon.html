@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Three.js Cube Transform App</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+        #info {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            width: 60%;
+            text-align: left;
+            z-index: 100;
+            display:block;
+            color: white;
+            opacity: 1.0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="info">
+    Figyeljük meg:
+    <ul>
+        <li>
+            Először a skálázás, utána a forgatás, majd végül az eltolás hatása érvényesül, bármilyen sorrendben is adjuk meg a kódban.
+        </li>
+        <li>
+            A Z-tengely menti eltolás és skálázás hatása nem látható. Ennek oka, hogy párhuzamos vetítésű kameránk van, ami a Z-tengely irányából nézi a színteret. Kattintsunk a 'Kamera váltás' gombra!
+        </li>
+    </ul>
+</div>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import Stats from './js-r132/examples/jsm/libs/stats.module.js';
+    import { GUI } from './js-r132/examples/jsm/libs/dat.gui.module.js';
+
+    var WIDTH, HEIGHT;
+    var scene, camera, renderer;
+    var stats;
+    var world;
+    var geometryBox;
+    var material;
+    var meshBox;
+    var gui;
+    var aspectRatio;
+    var axesHelper1;
+    var axesHelper2;
+
+    const cameraPos = [[0, 0, 200], [120, 150, 200]]
+    // const cameraPos = [[0, 0, 200], [150, 100, 200]]
+
+    var guiParams = {
+        rotationX: 0.0,
+        rotationY: 0.0,
+        rotationZ: 0.0,
+        positionX: 0.0,
+        positionY: 0.0,
+        positionZ: 0.0,
+        scaleX: 1.0,
+        scaleY: 1.0,
+        scaleZ: 1.0,
+        color: 0x0,
+        cameraPosIdx: 0,
+        reset: function () {
+            this.rotationX = 0.0;
+            this.rotationY = 0.0;
+            this.rotationZ = 0.0;
+            this.scaleX = 1.0;
+            this.scaleY = 1.0;
+            this.scaleZ = 1.0;
+            this.positionX = 0.0;
+            this.positionY = 0.0;
+            this.positionZ = 0.0;
+        },
+        cameraSwitch() {
+            this.cameraPosIdx = 1 - this.cameraPosIdx;
+        }
+    };
+
+    init();
+    animate();
+
+    function addStatsObject() {
+        stats = new Stats();
+        stats.setMode(0);
+
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        document.body.appendChild( stats.domElement );
+    }
+
+    function addControlGui() {
+        gui = new GUI( { autoPlace: false });
+        gui.add( guiParams, 'scaleX', 0, 3 ).step( 0.1 ).listen();
+        gui.add( guiParams, 'scaleY', 0, 3 ).step( 0.1 ).listen();
+        gui.add( guiParams, 'scaleZ', 0, 3 ).step( 0.1 ).listen();
+        gui.add( guiParams, 'rotationX', -180, 180 ).step( 5 ).listen();
+        gui.add( guiParams, 'rotationY', -180, 180 ).step( 5 ).listen();
+        gui.add( guiParams, 'rotationZ', -180, 180 ).step( 5 ).listen();
+        gui.add( guiParams, 'positionX', -100, 100 ).step( 5 ).listen();
+        gui.add( guiParams, 'positionY', -100, 100 ).step( 5 ).listen();
+        gui.add( guiParams, 'positionZ', -100, 100 ).step( 5 ).listen();
+        gui.addColor(guiParams, 'color').listen();
+        gui.add( guiParams, 'cameraSwitch').name( 'Kamera váltás' );
+        gui.add( guiParams, 'reset').name( 'Alaphelyzetbe' );
+
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '0px';
+        gui.domElement.style.right = '0px';
+        document.body.appendChild( gui.domElement );
+    }
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        // Renderer létrehozása és DOM-hoz adása
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x000000, 1 );
+        document.body.appendChild( renderer.domElement );
+
+        scene = new THREE.Scene();
+
+        camera = new THREE.OrthographicCamera( WIDTH / -2, WIDTH / 2, HEIGHT / 2, HEIGHT / -2, -500, 500 );
+
+        world = new THREE.Object3D();
+        scene.add(world);
+
+        geometryBox = new THREE.BoxGeometry( 100, 100, 100 );
+        material = new THREE.MeshBasicMaterial( { color: 0x00ffff, wireframe: true } );
+        meshBox = new THREE.Mesh( geometryBox, material );
+        guiParams.color = material.color.getHex();
+
+        world.add( meshBox );
+
+        axesHelper1 = new THREE.AxesHelper( 250 );
+        world.add( axesHelper1 );
+
+        axesHelper2 = new THREE.AxesHelper( 50 );
+        world.add( axesHelper2 );
+
+        addControlGui();
+        addStatsObject();
+
+        // Az ablak átméretezése esetén visszahívható függvény megadása
+        window.addEventListener( 'resize', handleWindowResize, false );
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        renderer.setSize( WIDTH, HEIGHT );
+
+        camera.left = WIDTH / -2;
+        camera.right = WIDTH / 2;
+        camera.top = HEIGHT / 2;
+        camera.bottom = HEIGHT / -2;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+
+        camera.position.x = cameraPos[guiParams.cameraPosIdx][0];
+        camera.position.y = cameraPos[guiParams.cameraPosIdx][1];
+        camera.position.z = cameraPos[guiParams.cameraPosIdx][2];
+        camera.lookAt( scene.position );
+
+        // axesHelper1.position.set(-gui.width / 2, document.getElementById( 'info' ).clientHeight / 2, 0);
+
+        meshBox.material.color = new THREE.Color( guiParams.color );
+        meshBox.rotation.x = THREE.Math.degToRad( guiParams.rotationX );
+        meshBox.rotation.y = THREE.Math.degToRad( guiParams.rotationY );
+        meshBox.rotation.z = THREE.Math.degToRad( guiParams.rotationZ );
+        meshBox.scale.x = guiParams.scaleX;
+        meshBox.scale.y = guiParams.scaleY;
+        meshBox.scale.z = guiParams.scaleZ;
+        // A panel és a szöveg méretét figyelembe véve középre igazítva.
+        meshBox.position.x = guiParams.positionX;
+        meshBox.position.y = guiParams.positionY;
+        meshBox.position.z = guiParams.positionZ;
+
+        axesHelper2.position.x = meshBox.position.x;
+        axesHelper2.position.y = meshBox.position.y;
+        axesHelper2.position.z = meshBox.position.z;
+
+        world.position.x = -gui.width / 2;
+        world.position.y = document.getElementById( 'info' ).clientHeight / 2;
+
+        render();
+        stats.update();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+    }
+
+</script>
+</body>
+</html>

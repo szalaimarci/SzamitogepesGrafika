@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>ThreeJs Tank Example</title>
+    <style>
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+
+<h1>Tank modell</h1>
+
+<div>
+    <canvas id="myCanvas" width="800" height="400"></canvas>
+</div>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import { TrackballControls } from './js-r132/examples/jsm/controls/TrackballControls.js';
+    import { GUI } from './js-r132/examples/jsm/libs/dat.gui.module.js';
+    import Stats from './js-r132/examples/jsm/libs/stats.module.js';
+
+    var container;
+    var scene, camera, renderer;
+    var ctrl, stats, controls;
+    var material;
+    var groupTank, groupUpper;
+    var holder3;
+
+    var meshController = function () {
+        this.rotationBarrel = 0.0;
+        this.rotationUpper = 0.0;
+        this.scaleTank = 1.0;
+    };
+
+    init();
+    animate();
+
+    function addStatsObject() {
+        stats = new Stats();
+        stats.setMode(0);
+
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = container.offsetLeft + 'px';
+        stats.domElement.style.top = container.offsetTop + 'px';
+        document.body.appendChild( stats.domElement );
+    }
+
+    function addControlGui( controlObject ) {
+        var gui = new GUI( { autoPlace: false });
+        gui.add( controlObject, 'rotationBarrel', -60, 15 );
+        gui.add( controlObject, 'rotationUpper', -180.0, 180.0 );
+        gui.add( controlObject, 'scaleTank', 0.5, 2.5);
+
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = container.offsetTop + 'px';
+        gui.domElement.style.left = container.offsetLeft + container.width - gui.width + 'px';
+        document.body.appendChild( gui.domElement );
+    }
+
+    function init() {
+        container = document.getElementById( 'myCanvas' );
+        renderer = new THREE.WebGLRenderer( { antialias: true, canvas: container } );
+        renderer.setSize( container.clientWidth, container.clientHeight );
+
+        scene = new THREE.Scene();
+        //camera = new THREE.PerspectiveCamera( 75, container.clientWidth / container.clientHeight, 0.1, 1000 );
+        //camera.position.z = 400;
+        camera = new THREE.OrthographicCamera( container.clientWidth / - 2, container.clientWidth / 2, container.clientHeight / 2, container.clientHeight / - 2, -500, 1000 );
+        camera.position.set( -100, 100, 200);
+        camera.lookAt( scene.position );
+
+        //material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true } );
+        material = new THREE.MeshLambertMaterial( { color: 0x333388 } );
+        var ambientlight = new THREE.AmbientLight( 0x808080 );
+        var light1 = new THREE.PointLight( 0xffffff );
+        light1.position.set( 200.0, 300.0, 100.0 );
+        var light2 = new THREE.PointLight( 0xffffff );
+        light2.position.set( -200.0, 300.0, 100.0 );
+        scene.add( ambientlight );
+        scene.add( light1 );
+        scene.add( light2 );
+
+        groupTank = new THREE.Group();
+
+        var box1 = new THREE.BoxGeometry( 72, 42, 120 );
+        var mesh1 = new THREE.Mesh( box1, material );
+        groupTank.add( mesh1 );
+
+        groupUpper = new THREE.Group();
+        groupUpper.position.y = 35.0;
+        groupTank.add( groupUpper );
+
+        var box2 = new THREE.BoxGeometry( 40, 28, 68 );
+        var mesh2 = new THREE.Mesh( box2, material );
+        groupUpper.add( mesh2 );
+
+        holder3 = new THREE.Object3D();
+        var box3 = new THREE.BoxGeometry( 10.0, 10.0, 80.0 );
+        var mesh3 = new THREE.Mesh( box3, material );
+        //mesh3.position.set( 0.0, -3.0, 69.0 );
+        mesh3.position.z = 40.0;
+        holder3.position.set( 0.0, 3.0, 34.0 );
+        holder3.add( mesh3 );
+        groupUpper.add( holder3 );
+
+        scene.add( groupTank );
+
+        ctrl = new meshController();
+        addControlGui( ctrl );
+        addStatsObject();
+
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+
+        groupTank.scale.set( ctrl.scaleTank, ctrl.scaleTank, ctrl.scaleTank );
+        groupUpper.rotation.y = ctrl.rotationUpper * Math.PI / 180.0;
+        holder3.rotation.x = ctrl.rotationBarrel * Math.PI / 180.0;
+
+        controls.update();
+        stats.update();
+
+        render();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+    }
+
+</script>
+</body>
+</html>

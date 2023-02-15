@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Three.js Object Tester Skeleton</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+
+<body>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import { TrackballControls } from './js-r132/examples/jsm/controls/TrackballControls.js';
+
+    // Globális változók
+    var WIDTH, HEIGHT, aspectRatio;
+    var renderer;
+    var scene, camera;
+    var controls;
+
+    init();
+    // Egy képkocka rajzolása
+    // render();
+    // Animáció indítása
+    animate();
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        // Renderer létrehozása és DOM-hoz adása
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x000000 );
+        document.body.appendChild( renderer.domElement );
+
+        // Színtér létrehozása
+        scene = new THREE.Scene();
+
+        // Kamera létrehozása és vetítési paramétereinek beállítása
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+        camera.position.set( 0, 10, 20 );
+        camera.lookAt( scene.position );
+
+        // Sík lap(alap) létrehozása
+        var planeGeometry = new THREE.PlaneGeometry( 84, 67, 52, 53 );
+        var planeMaterial = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true } );
+        var planeMesh = new THREE.Mesh( planeGeometry, planeMaterial );
+        scene.add( planeMesh );
+
+        //épület 1.szárny
+        var boxGeometry = new THREE.BoxGeometry( 20, 10, 10 );
+        var boxMaterial = new THREE.MeshBasicMaterial( { color: 0x00ffff, wireframe: true } );
+        var boxMesh = new THREE.Mesh( boxGeometry, boxMaterial );
+        boxMesh.position.set( 5, 3, 5 );
+        scene.add( boxMesh );
+
+        //épület 2.szárny
+        var boxGeometry2 = new THREE.BoxGeometry( 15, 10, 10 );
+        var boxMaterial2 = new THREE.MeshBasicMaterial( { color: 0x00ffff, wireframe: true } );
+        var boxMesh2 = new THREE.Mesh( boxGeometry2, boxMaterial2 );
+        boxMesh2.position.set( 7.5, -7, 5 );
+        scene.add( boxMesh2 );
+
+        //épület 3.szárny
+        var boxGeometry3 = new THREE.BoxGeometry( 20, 10, 10 );
+        var boxMaterial3 = new THREE.MeshBasicMaterial( { color: 0x00ffff, wireframe: true } );
+        var boxMesh3 = new THREE.Mesh( boxGeometry3, boxMaterial3 );
+        boxMesh3.position.set( 5, -17, 5 );
+        scene.add( boxMesh3 );
+
+        //épület tető
+        var coneGeometry = new THREE.ConeGeometry( 21.5, 4, 4 );
+        var coneMaterial = new THREE.MeshBasicMaterial( { color: 0xC70039, wireframe: true } );
+        var coneMesh = new THREE.Mesh( coneGeometry, coneMaterial );
+        coneMesh.position.set( 0, -7, 12 );
+        coneMesh.rotation.x = Math.PI / 2;
+        coneMesh.rotation.y = Math.PI / 4;
+        scene.add( coneMesh );
+
+        //pillér1
+        var cylGeometry = new THREE.CylinderGeometry( 1, 1, 10, 22 );
+        var cylMaterial = new THREE.MeshBasicMaterial( { color: 0x00ffff, wireframe: true } );
+        var cylMesh = new THREE.Mesh( cylGeometry, cylMaterial );
+        cylMesh.position.set( -11, 3, 5 );
+        cylMesh.rotation.x = Math.PI / 2;
+        scene.add( cylMesh );
+
+        //pillér2
+        var cylGeometry2 = new THREE.CylinderGeometry( 1, 1, 10, 22 );
+        var cylMaterial2 = new THREE.MeshBasicMaterial( { color: 0x00ffff, wireframe: true } );
+        var cylMesh2 = new THREE.Mesh( cylGeometry2, cylMaterial2 );
+        cylMesh2.position.set( -11, -17, 5 );
+        cylMesh2.rotation.x = Math.PI / 2;
+        scene.add( cylMesh2 );
+
+        //sín1
+        var boxGeometryS = new THREE.BoxGeometry( 1, 67, 1 );
+        var boxMaterialS = new THREE.MeshBasicMaterial( { color: 0xC0C0C0, wireframe: true } );
+        var boxMeshS = new THREE.Mesh( boxGeometryS, boxMaterialS );
+        boxMeshS.position.set( -25, 0, 0.5 );
+        scene.add( boxMeshS );
+
+        //sín2
+        var boxGeometryS2 = new THREE.BoxGeometry( 1, 67, 1 );
+        var boxMaterialS2 = new THREE.MeshBasicMaterial( { color: 0xC0C0C0, wireframe: true } );
+        var boxMeshS2 = new THREE.Mesh( boxGeometryS2, boxMaterialS2 );
+        boxMeshS2.position.set( -30, 0, 0.5 );
+        scene.add( boxMeshS2 );
+
+        //sín darabok
+        function sin(w, h, d, x, y, z) {
+            var boxGeometry = new THREE.BoxGeometry( w, h, d );
+            var boxMaterial = new THREE.MeshBasicMaterial( { color: 0xCD7F32, wireframe: true } );
+            var boxMesh = new THREE.Mesh( boxGeometry, boxMaterial );
+            boxMesh.position.set( x, y, z );
+            scene.add( boxMesh );
+        }
+
+        sin(5,1,1,-27.5,-30,0.5);
+        sin(5,1,1,-27.5,-27,0.5);
+        sin(5,1,1,-27.5,-24,0.5);
+        sin(5,1,1,-27.5,-21,0.5);
+        sin(5,1,1,-27.5,-18,0.5);
+        sin(5,1,1,-27.5,-15,0.5);
+        sin(5,1,1,-27.5,-12,0.5);
+        sin(5,1,1,-27.5,-9,0.5);
+        sin(5,1,1,-27.5,-6,0.5);
+        sin(5,1,1,-27.5,-3,0.5);
+        sin(5,1,1,-27.5,0,0.5);
+        sin(5,1,1,-27.5,3,0.5);
+        sin(5,1,1,-27.5,6,0.5);
+        sin(5,1,1,-27.5,9,0.5);
+        sin(5,1,1,-27.5,12,0.5);
+        sin(5,1,1,-27.5,15,0.5);
+        sin(5,1,1,-27.5,18,0.5);
+        sin(5,1,1,-27.5,21,0.5);
+        sin(5,1,1,-27.5,24,0.5);
+        sin(5,1,1,-27.5,27,0.5);
+        sin(5,1,1,-27.5,30,0.5);
+
+        // Az ablak későbbi átméretezése
+        window.addEventListener( 'resize', handleWindowResize, false );
+
+        // Kamera vezérlés
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+
+        var axesHelper = new THREE.AxesHelper( 10 );
+        scene.add( axesHelper );
+
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        console.log( 'WIDTH=' + WIDTH + '; HEIGHT=' + HEIGHT );
+        renderer.setSize( WIDTH, HEIGHT );
+        aspectRatio = WIDTH / HEIGHT;
+        camera.aspect = aspectRatio;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        // Újabb képkocka rajzolásának kérése.
+        // Maximálisan 60 FPS-t biztosít a rendszer.
+        requestAnimationFrame( animate );
+        // Kameramozgás vezérlése
+        controls.update();
+        // Új képkocka rajzolása
+        render();
+    }
+
+    function render() {
+        // 3D -> 2D vetített kép kiszámítása.
+        // scene 3D színtér képe a camera kamera szemszögéből.
+        renderer.render( scene, camera );
+    }
+
+</script>
+</body>
+</html>

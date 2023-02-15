@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>ThreeJs Box Rotation Example 1</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+    </style>
+</head>
+
+<body>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import { TrackballControls } from './js-r132/examples/jsm/controls/TrackballControls.js';
+    import { GUI } from './js-r132/examples/jsm/libs/dat.gui.module.js';
+    import Stats from './js-r132/examples/jsm/libs/stats.module.js';
+
+    var WIDTH, HEIGHT;
+    var scene, camera, renderer;
+    var ctrl, stats, controls;
+    var geometryHolder, geometryBox;
+    var material;
+    var meshBox;
+
+    var meshController = function () {
+        this.rotationObject = 0.01;
+        this.isGlobalRotation = false;
+        this.colorBox = material.color.getHex();
+        this.resetObject = function() {
+            meshBox.rotation.y = 0;
+        };
+        this.resetGlobal = function() {
+            geometryHolder.rotation.y = 0;
+        };
+    };
+
+    init();
+    animate();
+
+    function addStatsObject() {
+        stats = new Stats();
+        stats.setMode(0);
+
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        document.body.appendChild( stats.domElement );
+    }
+
+    function addControlGui( controlObject ) {
+        var gui = new GUI( { autoPlace: false });
+        gui.add( controlObject, 'rotationObject', -0.02, 0.02).step( 0.01 );
+        gui.add( controlObject, 'resetObject' );
+        gui.add( controlObject, 'isGlobalRotation' );
+        gui.add( controlObject, 'resetGlobal' );
+        gui.addColor(controlObject, 'colorBox');
+
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.top = '0px';
+        gui.domElement.style.right = '0px';
+        document.body.appendChild( gui.domElement );
+    }
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+
+        // Színtér létrehozása
+        scene = new THREE.Scene();
+
+        // Renderer létrehozása és DOM-hoz adása
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x000000, 1 );
+        document.body.appendChild( renderer.domElement );
+
+        camera = new THREE.OrthographicCamera( -WIDTH, WIDTH, HEIGHT, -HEIGHT, -1000, 1000 );
+        camera.position.x = 400;
+        camera.position.y = 400;
+        camera.position.z = 400;
+        camera.lookAt( scene.position );
+
+        var axesHelper = new THREE.AxesHelper( 500 );
+        scene.add( axesHelper );
+
+        geometryBox = new THREE.BoxGeometry( 100, 200, 100 );
+        material = new THREE.MeshPhongMaterial( { color: 0x333389, wireframe: false } );
+        meshBox = new THREE.Mesh( geometryBox, material );
+        meshBox.position.set( 0, 100, 250 );
+
+        geometryHolder = new THREE.Object3D();
+        geometryHolder.add( meshBox );
+        scene.add( geometryHolder );
+
+        var ambientLight = new THREE.AmbientLight( 0x808080, 1 );
+        scene.add( ambientLight );
+
+        var pLight = new THREE.PointLight( 0xffffff, 1 );
+        pLight.position.set( 0, 0, 0 );
+        camera.add( pLight );
+        scene.add( camera );
+
+        ctrl = new meshController();
+        addControlGui( ctrl );
+
+        addStatsObject();
+
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+        controls.noZoom = true;
+
+        // Az ablak átméretezése esetén visszahívható függvény megadása
+        window.addEventListener( 'resize', handleWindowResize, false );
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        renderer.setSize( WIDTH, HEIGHT );
+        // Párhuzamos vetítésű kamera paramétereinek frissítése
+        camera.top = HEIGHT;
+        camera.bottom = -HEIGHT;
+        camera.left = -WIDTH;
+        camera.right = WIDTH;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        meshBox.material.color = new THREE.Color( ctrl.colorBox );
+        meshBox.rotation.y += ctrl.rotationObject;
+        if( ctrl.isGlobalRotation )
+            geometryHolder.rotation.y += 0.01;
+
+        controls.update();
+        stats.update();
+        requestAnimationFrame( animate );
+
+        render();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+    }
+
+</script>
+</body>
+</html>

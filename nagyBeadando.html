@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Nagy beadandó</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+        #info {
+            position: absolute;
+            color: white;
+            top: 10px;
+            right: 500px;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            visibility: visible;
+        }
+        #info2 {
+            position: absolute;
+            color: white;
+            top: 10px;
+            left: 500px;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            visibility: visible;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="info">Szalai Marcell <br/> WCKHCZ <br/> Programtervező informatikus <br/> 2021/22/1</div>
+<div id="info2">LEÍRÁS: <br/> Vonat mozgatása: W-S <br/> Fénysorompó fényei: P-Z<br/> Nappal-éjszaka váltás: N<br/> Szöveg ki/be kapcsolása: I</div>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import { TrackballControls } from './js-r132/examples/jsm/controls/TrackballControls.js';
+    import { OBJLoader } from './js-r132/examples/jsm/loaders/OBJLoader.js';
+    import { MTLLoader } from './js-r132/examples/jsm/loaders/MTLLoader.js';
+
+    // Globális változók
+    var WIDTH, HEIGHT, aspectRatio;
+    var renderer;
+    var scene, camera;
+    var controls;
+    var meshLoaded, meshLoadedW;
+    var pLight2, pLight3;
+    var ambientLight, sLight;
+    var cylMeshO;
+    var rotation=0.0;
+
+    loader_obj_mtl();
+
+    function loader_obj_mtl() {
+        var OBJFile = 'nagyBeadandoBlender.obj';
+        var MTLFile = 'nagyBeadandoBlender.mtl';
+        new MTLLoader()
+            .load(MTLFile, function (materials) {
+                materials.preload();
+                new OBJLoader()
+                    .setMaterials(materials)
+                    .load(OBJFile, function (object) {
+                        meshLoaded = object;
+                        console.log(object);
+
+                        object.traverse(function (child) {
+                            if (child instanceof THREE.Mesh) {
+                                child.scale.set(1.1, 1.1, 1.1);
+                                console.log(child.material);
+                            }
+                        });
+                        loader_obj_mtlW();
+                    });
+            });
+    }
+
+    function loader_obj_mtlW() {
+        var OBJFile = 'nagyBeadandoBlenderW.obj';
+        var MTLFile = 'nagyBeadandoBlenderW.mtl';
+        new MTLLoader()
+            .load(MTLFile, function (materials) {
+                materials.preload();
+                new OBJLoader()
+                    .setMaterials(materials)
+                    .load(OBJFile, function (object) {
+                        meshLoadedW = object;
+                        console.log(object);
+
+                        object.traverse(function (child) {
+                            if (child instanceof THREE.Mesh) {
+                                child.scale.set(2, 2, 2);
+                                console.log(child.material);
+                            }
+                        });
+                        init();
+                    });
+            });
+    }
+
+    function handleKeyPress( event ) {
+        var char = event.which || event.keyCode;
+        console.log( 'keypress: ' + char );
+        if (event.keyCode === 119) {
+            if (meshLoadedW.position.y + 3 < 30) {
+                meshLoadedW.position.y += 3;
+            }
+        }
+        if (event.keyCode === 115) {
+            if (meshLoadedW.position.y - 3 > -23) {
+                meshLoadedW.position.y -= 3;
+            }
+        }
+        if (event.keyCode === 105) {
+            if (document.getElementById("info").style.visibility === "visible") {
+                document.getElementById("info").style.visibility = "hidden";
+                document.getElementById("info2").style.visibility = "hidden";
+            } else {
+                document.getElementById("info").style.visibility = "visible";
+                document.getElementById("info2").style.visibility = "visible";
+            }
+        }
+        if (event.keyCode === 112) {
+            if (pLight2.intensity === 1) {
+                pLight2.intensity = 0;
+            } else {
+                pLight2.intensity = 1;
+            }
+        }
+        if (event.keyCode === 122) {
+            if (pLight3.intensity === 1) {
+                pLight3.intensity = 0;
+            } else {
+                pLight3.intensity = 1;
+            }
+        }
+        if (event.keyCode === 110) {
+            if (ambientLight.intensity === 0) {
+                ambientLight.intensity = 5;
+                sLight.intensity = 1;
+            } else {
+                ambientLight.intensity = 0;
+                sLight.intensity = 0;
+            }
+        }
+    }
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        // Renderer létrehozása és DOM-hoz adása
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x000000, 1 );
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild( renderer.domElement );
+
+        // Színtér létrehozása
+        scene = new THREE.Scene();
+
+        // Kamera létrehozása és vetítési paramétereinek beállítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+        camera.position.set(-10,-30,40);
+
+        //Blender fénysorompó
+        meshLoaded.position.set(-22, 25, 0.5);
+        meshLoaded.rotation.x = Math.PI / 2;
+        meshLoaded.rotation.y = Math.PI / 2;
+        scene.add( meshLoaded );
+
+        //Blender vonat
+        meshLoadedW.position.set(-27.5, -20, 3);
+        meshLoadedW.rotation.x = Math.PI / 2;
+        meshLoadedW.rotation.y = Math.PI * 1.5;
+        scene.add( meshLoadedW );
+
+        //talaj textúrájsa
+        var textureLoader = new THREE.TextureLoader();
+        var texture = textureLoader.load( 'nagyBeadandoTexture.jpg' );
+
+        // Sík lap(alap)
+        var planeGeometry = new THREE.PlaneGeometry( 84, 67 );
+        var planeMaterial = new THREE.MeshPhongMaterial();
+        planeMaterial.map = texture;
+        var planeMesh = new THREE.Mesh( planeGeometry, planeMaterial );
+        scene.add( planeMesh );
+
+        //épület 1.szárny
+        var boxGeometry = new THREE.BoxGeometry( 20, 10, 10 );
+        var boxMaterial = new THREE.MeshPhongMaterial( { color: 0xd29063, wireframe: false } );
+        var boxMesh = new THREE.Mesh( boxGeometry, boxMaterial );
+        boxMesh.position.set( 5, 3, 5 );
+        scene.add( boxMesh );
+
+        //épület 2.szárny
+        var boxGeometry2 = new THREE.BoxGeometry( 15, 10, 10 );
+        var boxMaterial2 = new THREE.MeshPhongMaterial( { color: 0xd29063, wireframe: false } );
+        var boxMesh2 = new THREE.Mesh( boxGeometry2, boxMaterial2 );
+        boxMesh2.position.set( 7.5, -7, 5 );
+        scene.add( boxMesh2 );
+
+        //épület 3.szárny
+        var boxGeometry3 = new THREE.BoxGeometry( 20, 10, 10 );
+        var boxMaterial3 = new THREE.MeshPhongMaterial( { color: 0xd29063, wireframe: false } );
+        var boxMesh3 = new THREE.Mesh( boxGeometry3, boxMaterial3 );
+        boxMesh3.position.set( 5, -17, 5 );
+        scene.add( boxMesh3 );
+
+        //épület tető
+        var coneGeometry = new THREE.ConeGeometry( 21.5, 4, 4 );
+        var coneMaterial = new THREE.MeshPhongMaterial( {
+            color: 0xFF6666,
+            shininess: 80,
+            specular: 0x111111,
+            side: THREE.FrontSide,
+            wireframe: false
+        } );
+        var coneMesh = new THREE.Mesh( coneGeometry, coneMaterial );
+        coneMesh.position.set( 0, -7, 12 );
+        coneMesh.rotation.x = Math.PI / 2;
+        coneMesh.rotation.y = Math.PI / 4;
+        coneMesh.castShadow = true;
+        coneMesh.receiveShadow = true;
+        scene.add( coneMesh );
+
+        //pillér1
+        var cylGeometry = new THREE.CylinderGeometry( 1, 1, 10, 22 );
+        var cylMaterial = new THREE.MeshPhongMaterial( { color: 0xd29063, wireframe: false } );
+        var cylMesh = new THREE.Mesh( cylGeometry, cylMaterial );
+        cylMesh.position.set( -11, 3, 5 );
+        cylMesh.rotation.x = Math.PI / 2;
+        cylMesh.castShadow = true;
+        cylMesh.receiveShadow = false;
+        scene.add( cylMesh );
+
+        //pillér2
+        var cylGeometry2 = new THREE.CylinderGeometry( 1, 1, 10, 22 );
+        var cylMaterial2 = new THREE.MeshPhongMaterial( { color: 0xd29063, wireframe: false } );
+        var cylMesh2 = new THREE.Mesh( cylGeometry2, cylMaterial2 );
+        cylMesh2.position.set( -11, -17, 5 );
+        cylMesh2.rotation.x = Math.PI / 2;
+        cylMesh2.castShadow = true;
+        cylMesh2.receiveShadow = false;
+        scene.add( cylMesh2 );
+
+        var textureLoader3 = new THREE.TextureLoader();
+        var texture3 = textureLoader3.load('nagyBeadandoTexture3.jpg');
+
+        // ajtó létrehozása
+        var boxGeometryA = new THREE.BoxGeometry( 5, 3, 0.5 );
+        var boxMaterialA = new THREE.MeshPhongMaterial();
+        boxMaterialA.map = texture3;
+        var boxMeshA = new THREE.Mesh( boxGeometryA, boxMaterialA );
+        boxMeshA.position.set( 0, -7, 2 );
+        boxMeshA.rotation.y = Math.PI / 2;
+        scene.add( boxMeshA );
+
+        //sorompó oszlop
+        var cylGeometryO = new THREE.CylinderGeometry( 0.5, 0.5, 10, 32 );
+        var cylMaterialO = new THREE.MeshPhongMaterial( { color: 0x767676, wireframe: false } );
+        cylMeshO = new THREE.Mesh( cylGeometryO, cylMaterialO );
+        cylMeshO.position.set(-27, 27, 2.2);
+        cylMeshO.rotation.z = Math.PI / 2;
+        scene.add( cylMeshO );
+
+        //sorompó
+        var cylGeometryS = new THREE.CylinderGeometry( 0.5, 0.5, 5, 32 );
+        var cylMaterialS = new THREE.MeshPhongMaterial( { color: 0x767676, wireframe: false } );
+        var cylMeshS = new THREE.Mesh( cylGeometryS, cylMaterialS );
+        cylMeshS.position.set(-22, 28, 2.2);
+        cylMeshS.rotation.x = Math.PI / 2;
+        scene.add( cylMeshS );
+
+        //sín1
+        var boxGeometryS = new THREE.BoxGeometry( 1, 67, 1 );
+        var boxMaterialS = new THREE.MeshPhongMaterial( { color: 0x767676, wireframe: false } );
+        var boxMeshS = new THREE.Mesh( boxGeometryS, boxMaterialS );
+        boxMeshS.position.set( -25, 0, 0.5 );
+        scene.add( boxMeshS );
+
+        //sín2
+        var boxGeometryS2 = new THREE.BoxGeometry( 1, 67, 1 );
+        var boxMaterialS2 = new THREE.MeshPhongMaterial( { color: 0x767676, wireframe: false } );
+        var boxMeshS2 = new THREE.Mesh( boxGeometryS2, boxMaterialS2 );
+        boxMeshS2.position.set( -30, 0, 0.5 );
+        scene.add( boxMeshS2 );
+
+        var textureLoader2 = new THREE.TextureLoader();
+        var texture2 = textureLoader2.load('nagyBeadandoTexture3.jpg');
+
+        //sín darabok
+        function sin(w, h, d, x, y, z) {
+            var boxGeometry = new THREE.BoxGeometry( w, h, d );
+            var boxMaterial = new THREE.MeshPhongMaterial();
+            boxMaterial.map = texture2;
+            var boxMesh = new THREE.Mesh( boxGeometry, boxMaterial );
+            boxMesh.position.set( x, y, z );
+            scene.add( boxMesh );
+        }
+
+        //ciklus a sín darabok kirajzolására
+        var i = -30;
+        while(i <= 30) {
+            sin(4,1,1,-27.5,i,0.5);
+            i=i+3;
+        }
+
+        // tábla létrehozása
+        var boxGeometryT = new THREE.BoxGeometry( 3, 17, 0.5 );
+        var boxMaterialT = new THREE.MeshPhongMaterial( { color: 0x964B00, wireframe: false } );
+        var boxMeshT = new THREE.Mesh( boxGeometryT, boxMaterialT );
+        boxMeshT.position.set( -13, -7.5, 12 );
+        boxMeshT.rotation.y = Math.PI / 2;
+        boxMeshT.castShadow = true;
+        boxMeshT.receiveShadow = false;
+        scene.add( boxMeshT );
+
+        //var ambientLight = new THREE.AmbientLight( 0x964B00, 1 );
+        ambientLight = new THREE.AmbientLight( 0x202020, 5 );
+        scene.add( ambientLight );
+
+        // Reflektorfény
+        sLight = new THREE.SpotLight( 0xffffff, 1, 50 );
+        sLight.position.set( 0, 0, 30 );
+        sLight.angle = Math.PI / 3;
+        sLight.target = coneMesh;
+        sLight.penumbra = 0.8;
+        sLight.distance = 90;
+        sLight.castShadow = true;
+        scene.add( sLight );
+
+
+        // Pontfény
+        var pLight = new THREE.PointLight( 0xffffff, 1 );
+        pLight.position.set( -10, -8, 10 );
+        scene.add( pLight );
+
+        // jelzőlámpa fény
+        pLight2 = new THREE.SpotLight( 0xff0000, 0 );
+        pLight2.position.set( -21.4, 24.6, 6.2 );
+        pLight2.castShadow = true;
+        scene.add( pLight2 );
+
+        //jelzőlámpa2 fény
+        pLight3 = new THREE.SpotLight( 0x00ff00, 0 );
+        pLight3.position.set( -22.4, 24.6, 6.2 );
+        pLight3.castShadow = true;
+        scene.add( pLight3 );
+
+        // Helper
+        //var spotLightHelper = new THREE.SpotLightHelper( sLight );
+        //scene.add( spotLightHelper );
+
+        //var sphereSize = 0.2;
+        //var pointLightHelper = new THREE.PointLightHelper( pLight, sphereSize );
+        //scene.add( pointLightHelper );
+
+        var sphereSize2 = 0.2;
+        var pointLightHelper2 = new THREE.PointLightHelper( pLight2, sphereSize2 );
+        scene.add( pointLightHelper2 );
+
+        var sphereSize3 = 0.2;
+        var pointLightHelper3 = new THREE.PointLightHelper( pLight3, sphereSize3 );
+        scene.add( pointLightHelper3 );
+
+        //var axesHelper = new THREE.AxesHelper( 100 );
+        //scene.add( axesHelper );
+
+        // Az ablak későbbi átméretezése
+        window.addEventListener( 'resize', handleWindowResize, false );
+
+        // Kamera vezérlés
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+
+        window.addEventListener( 'keypress', handleKeyPress );
+
+
+
+        camera.lookAt(scene.position);
+
+        animate();
+
+
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        console.log( 'WIDTH=' + WIDTH + '; HEIGHT=' + HEIGHT );
+        renderer.setSize( WIDTH, HEIGHT );
+        aspectRatio = WIDTH / HEIGHT;
+        camera.aspect = aspectRatio;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+        controls.update();
+
+        render();
+    }
+
+    function render() {
+        // 3D -> 2D vetített kép kiszámítása.
+        // scene 3D színtér képe a camera kamera szemszögéből.
+
+        renderer.render( scene, camera );
+    }
+
+</script>
+</body>
+</html>

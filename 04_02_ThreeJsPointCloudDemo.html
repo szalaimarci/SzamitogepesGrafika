@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Three.js Point Cloud Demo</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+
+<body>
+
+<script type="module">
+    import * as THREE from "./js-r132/build/three.module.js";
+
+    // Ötlet: https://codepen.io/seanseansean/pen/EaBZEY
+    // Globális változók
+    var WIDTH, HEIGHT, aspectRatio;
+    var fieldOfView;
+    var windowHalfX, windowHalfY;
+    var nearPlane, farPlane;
+    var renderer;
+    var scene, camera;
+    var particles;
+    var mouseX, mouseY;
+    var materials = [];
+    var parameters;
+
+    fieldOfView = 75;
+    nearPlane = 1;
+    farPlane = 3000;
+
+    init();
+    animate();
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+        windowHalfX = window.innerWidth / 2;
+        windowHalfY = window.innerHeight / 2;
+        mouseX = 0;
+        mouseY = 0;
+
+        // Renderer létrehozása és DOM-hoz adása
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x000000 );
+        document.body.appendChild( renderer.domElement );
+
+        // Színtér létrehozása
+        scene = new THREE.Scene();
+        var fogHex = 0x000000;
+        var fogDensity = 0.0007;
+        scene.fog = new THREE.FogExp2(fogHex, fogDensity);
+
+        // Kamera létrehozása és vetítési paramétereinek beállítása
+        var cameraZ = farPlane / 2;
+
+        camera = new THREE.PerspectiveCamera(fieldOfView, aspectRatio, nearPlane, farPlane);
+        camera.position.z = cameraZ;
+
+        // Ponthalmaz
+        const vertices = [];
+        let vx, vy, vz;
+        let particlesGeometry = new THREE.BufferGeometry();
+        let particleCount = 20000;
+        for( i = 0; i < particleCount; i++ ) {
+            vx = Math.random() * 2000 - 1000;
+            vy = Math.random() * 2000 - 1000;
+            vz = Math.random() * 2000 - 1000;
+            vertices.push( vx, vy, vz );
+        }
+
+        // Attribútum beállítása
+        particlesGeometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+
+        parameters = [
+            [
+                [1, 1, 0.5], 5
+            ],
+            [
+                [0.95, 1, 0.5], 4
+            ],
+            [
+                [0.90, 1, 0.5], 3
+            ],
+            [
+                [0.85, 1, 0.5], 2
+            ],
+            [
+                [0.80, 1, 0.5], 1
+            ]
+        ];
+        var parameterCount = parameters.length;
+
+        for (var i = 0; i < parameterCount; i++) {
+            var color = parameters[i][0];
+            var size = parameters[i][1];
+
+            materials[i] = new THREE.PointsMaterial( { size: size, color: color } );
+
+            particles = new THREE.Points( particlesGeometry, materials[i] );
+
+            particles.rotation.x = Math.random() * 6;
+            particles.rotation.y = Math.random() * 6;
+            particles.rotation.z = Math.random() * 6;
+
+            scene.add(particles);
+        }
+
+        // Az ablak későbbi átméretezése esetén visszahívható függvény megadása
+        window.addEventListener( 'resize', handleWindowResize, false );
+        // Egérmozgás kezelése
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        // Eseménykezelés mobil eszközökön
+        document.addEventListener('touchstart', onDocumentTouchStart, false);
+        document.addEventListener('touchmove', onDocumentTouchMove, false);
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        windowHalfX = window.innerWidth / 2;
+        windowHalfY = window.innerHeight / 2;
+        renderer.setSize( WIDTH, HEIGHT );
+        aspectRatio = WIDTH / HEIGHT;
+        camera.aspect = aspectRatio;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        var time = Date.now() * 0.00005;
+        // Újabb képkocka rajzolásának kérése.
+        // Maximálisan 60 FPS-t biztosít a rendszer.
+        requestAnimationFrame( animate );
+
+        camera.position.x += (mouseX - camera.position.x) * 0.05;
+        camera.position.y += (-mouseY - camera.position.y) * 0.05;
+        camera.lookAt(scene.position);
+
+        for (var i = 0; i < scene.children.length; i++) {
+            var object = scene.children[i];
+
+            if (object instanceof THREE.Points) {
+
+                object.rotation.y = time * (i < 4 ? i + 1 : -(i + 1));
+            }
+        }
+
+        var h;
+        for (i = 0; i < materials.length; i++) {
+            var color = parameters[i][0];
+
+            h = (360 * (color[0] + time) % 360) / 360;
+            materials[i].color.setHSL(h, color[1], color[2]);
+        }
+
+        render();
+    }
+
+    function render() {
+        // 3D -> 2D vetített kép kiszámítása.
+        // scene 3D színtér képe a camera kamera szemszögéből.
+        renderer.render( scene, camera );
+    }
+
+    function onDocumentMouseMove(e) {
+        mouseX = e.clientX - windowHalfX;
+        mouseY = e.clientY - windowHalfY;
+        //console.log('x=' + mouseX + '; y=' + mouseY );
+    }
+
+    function onDocumentTouchStart(e) {
+        if (e.touches.length === 1) {
+            e.preventDefault();
+            mouseX = e.touches[0].pageX - windowHalfX;
+            mouseY = e.touches[0].pageY - windowHalfY;
+        }
+    }
+
+    function onDocumentTouchMove(e) {
+        if (e.touches.length === 1) {
+            e.preventDefault();
+            mouseX = e.touches[0].pageX - windowHalfX;
+            mouseY = e.touches[0].pageY - windowHalfY;
+        }
+    }
+
+</script>
+</body>
+</html>

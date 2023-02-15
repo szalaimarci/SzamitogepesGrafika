@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Three.js Canvas Example</title>
+    <style>
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+
+<h1>Three.js megjelenítés létező HTML5 canvas objektumban</h1>
+
+HTML5 vászon definíció:
+
+<pre>
+        &lt;div align="center"&gt;
+            &lt;canvas <font color="red">id="myCanvas"</font> <font color="blue">width="800" height="400"</font>&gt;&lt/canvas&gt;
+        &lt;/div&gt;
+</pre>
+
+<div align="center">
+    <canvas id="myCanvas" width="800" height="400"></canvas>
+</div>
+
+<p>Már létező vászonhoz csatlakozás:</p>
+<pre>
+        <font color="red">container = document.getElementById( 'myCanvas' );</font>
+        // Vászon objektum méretének lekérése és méretarány számítása
+        HEIGHT = <font color="red">container.clientHeight</font>;
+        WIDTH = <font color="red">container.clientWidth</font>;
+        aspectRatio = WIDTH / HEIGHT;
+
+        renderer = new THREE.WebGLRenderer( { antialias: true, <font color="red">canvas: container</font> } );
+        renderer.setSize( WIDTH, HEIGHT );
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+</pre>
+
+Interaktív vezérlés egérrel importálás:
+
+<pre>
+        import { TrackballControls } from './js/examples/jsm/controls/TrackballControls.js';
+</pre>
+
+Egérvezérlés aktiválása:
+<pre>
+    //function init()-ben:
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+
+    // function animate()-ben:
+        controls.update();
+</pre>
+
+Egérvezérlés használata:
+
+<p>A modellező területen bal egérgomb lenyomása, majd nyomva tartása mellett egér mozgatása.</p>
+
+<script type="module">
+    import * as THREE from './js-r132/build/three.module.js';
+    import { TrackballControls } from './js-r132/examples/jsm/controls/TrackballControls.js';
+
+    var WIDTH, HEIGHT, aspectRatio;
+    var scene, camera, renderer;
+    var controls;
+    var geometry, material, mesh;
+    var container;
+
+    init();
+
+    // Csak egyszeri állókép rajzolása
+    // render();
+
+    // Animáció indítása
+    animate();
+
+    function init() {
+        container = document.getElementById( 'myCanvas' );
+        // Vászon objektum méretének lekérése és méretarány számítása
+        HEIGHT = container.clientHeight;
+        WIDTH = container.clientWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        renderer = new THREE.WebGLRenderer( { antialias: true, canvas: container } );
+        renderer.setSize( WIDTH, HEIGHT );
+
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+        camera.position.z = 15;
+
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+
+        geometry = new THREE.SphereGeometry( 8, 20, 20 );
+        //geometry = new THREE.BoxGeometry( 10, 10, 10 );
+        material = new THREE.MeshBasicMaterial( { color: 0x00ff00, wireframe: true } );
+        mesh = new THREE.Mesh( geometry, material );
+        mesh.rotation.z = 0.2;
+        scene.add( mesh );
+
+        var axesHelper = new THREE.AxesHelper( 12 );
+        scene.add( axesHelper );
+    }
+
+    function animate() {
+        requestAnimationFrame( animate );
+        controls.update();
+        render();
+    }
+
+    function render() {
+        renderer.render(scene, camera);
+    }
+
+</script>
+</body>
+</html>
